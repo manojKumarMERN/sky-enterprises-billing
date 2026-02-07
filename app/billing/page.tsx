@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { useBillingStore } from "@/store/useBillingStore";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import CompanyBlock from "./_components/CompanyBlock";
@@ -11,7 +11,6 @@ import InvoiceTable from "./_components/InvoiceTable";
 import ProductBlock from "./_components/ProductBlock";
 import SignatureBlock from "./_components/SignatureBlock";
 import SummaryBlock from "./_components/SummaryBlock";
-import { handleDownload } from "@/lib/utils";
 
 export default function BillingPage() {
   const router = useRouter();
@@ -22,8 +21,7 @@ export default function BillingPage() {
 
   const handleGenerateInvoice = () => {
     const noClient =
-      !clientDetails?.name?.trim() || !clientDetails?.address?.trim();
-    const noItems = !items || items.length < 1;
+      !clientDetails?.name?.trim() || !clientDetails?.address?.trim();    const noItems = !items || items.length < 1;
 
     if (noClient) {
       toast.error("Please enter customer details");

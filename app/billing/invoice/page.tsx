@@ -56,7 +56,9 @@ export default function InvoicePage() {
                         Edit
                     </Button>
 
-                    <Button onClick={handleDownload} className="group flex items-center gap-2">
+                    <Button onClick={()=>{
+                        handleDownload(invoiceData)
+                    }} className="group flex items-center gap-2">
                         <Download className="h-4 w-4" />
                         Download
                     </Button>

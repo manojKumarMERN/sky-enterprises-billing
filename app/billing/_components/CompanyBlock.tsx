@@ -10,9 +10,16 @@ export default function CompanyBlock() {
         <Card>
             <CardContent className="flex flex-col md:flex-row justify-between p-6 gap-4">
 
-                <div>
+                <div className="flex justify-start gap-3" >
+                    <div className="flex justify-center items-center" >
+                    <img src="/logo.png" alt="logo" className="h-20" />
+
+                    </div>
+                    <div className="flex flex-col justify-center" >
                     <h1 className="text-2xl font-bold">SKY Enterprises and Decors</h1>
                     <p className="text-sm text-muted-foreground">Tiruchengode</p>
+
+                    </div>
                 </div>
 
                 <div className="text-sm text-right">
