@@ -36,6 +36,8 @@ export default function InvoicePage() {
             address: clientDetails?.address || "N/A",
         },
         items: items || [],
+        discountPercent: useBillingStore((s: any) => s.discountPercent),
+        discountFlat: useBillingStore((s: any) => s.discountFlat),
     };
 
     console.log(invoiceData ,"invoice" );

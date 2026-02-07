@@ -16,14 +16,20 @@ type BillingStore = {
   tempItem: Product;
   items: Product[];
   isEditing: boolean;
-   discountPercent: number;
+
+  discountEnabled: boolean;
+  discountPercent: number;
+  discountFlat: number;
+
+  setDiscountEnabled: (v: boolean) => void;
+  setDiscountPercent: (v: number) => void;
+  setDiscountFlat: (v: number) => void;
 
   setItem: (data: Partial<Product>) => void;
   addOrUpdateItem: () => void;
   editItem: (item: Product) => void;
   deleteItem: (id: string) => void;
   resetTemp: () => void;
-  setDiscount: (val: number) => void;
 };
 
 // Updated emptyItem to include sqft and rate
@@ -46,12 +52,13 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     phone: "",
   },
 
+  discountEnabled: false,
   discountPercent: 0,
+  discountFlat: 0,
 
-  setDiscount: (val) =>
-  set(() => ({
-    discountPercent: val,
-  })),
+  setDiscountEnabled: (v) => set({ discountEnabled: v }),
+  setDiscountPercent: (v) => set({ discountPercent: v }),
+  setDiscountFlat: (v) => set({ discountFlat: v }),
 
 
   setClient: (data) =>

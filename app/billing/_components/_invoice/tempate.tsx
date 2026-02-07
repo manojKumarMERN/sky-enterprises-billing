@@ -19,11 +19,16 @@ type InvoiceData = {
     address: string;
   };
   items: InvoiceItem[];
+  discountPercent?: number;
+  discountFlat?: number;
 };
 
 export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
   const date = new Date().toLocaleDateString();
   const day = new Date().toLocaleDateString("en-IN", { weekday: "long" });
+
+  const discountPercent = data.discountPercent || 0;
+  const discountFlat = data.discountFlat || 0;
 
   const total = data.items.reduce((sum, item) => {
     if (item.sqft && item.rate) {
@@ -32,7 +37,11 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
     return sum + item.qty * item.price;
   }, 0);
 
- return (
+  const percentDiscountAmount = (total * discountPercent) / 100;
+  const finalDiscount = percentDiscountAmount + discountFlat;
+  const grandTotal = total - finalDiscount;
+
+  return (
     <>
       <style>{`
         * { box-sizing: border-box; }
@@ -102,10 +111,23 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
         }
 
         .signature {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 50px;
-        }
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 50px;
+}
+
+.signature-box {
+  text-align: right;
+}
+
+.total-summary {
+  min-width: 280px;
+  border: 1px solid #ddd;
+  padding: 12px 15px;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-size: 14px;
+}
 
         .line {
           border-top: 1px solid #000;
@@ -140,65 +162,97 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
 
         {/* TABLE */}
         <table>
-  <thead>
-    <tr>
-      <th>S.No</th>
-      <th>Product</th>
-      <th>Qty</th>
-      <th>Total Sqft</th>
-      <th>Price / Rate (₹)</th>
-      <th>Total (₹)</th>
-    </tr>
-  </thead>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Total Sqft</th>
+              <th>Price / Rate (₹)</th>
+              <th>Total (₹)</th>
+            </tr>
+          </thead>
 
-  <tbody>
-    {data.items.map((item, i) => {
-      const totalSqft = item.sqft ? item.qty * item.sqft : 0;
+          <tbody>
+            {data.items.map((item, i) => {
+              const totalSqft = item.sqft ? item.qty * item.sqft : 0;
 
-      // Rate per sqft OR normal price
-      const unitPrice = item.sqft ? item.rate || 0 : item.price;
+              // Rate per sqft OR normal price
+              const unitPrice = item.sqft ? item.rate || 0 : item.price;
 
-      // Final total
-      const totalPrice = item.sqft
-        ? totalSqft * (item.rate || 0)
-        : item.qty * item.price;
+              // Final total
+              const totalPrice = item.sqft
+                ? totalSqft * (item.rate || 0)
+                : item.qty * item.price;
 
-      return (
-        <tr key={item.id}>
-          <td>{i + 1}</td>
-          <td>{item.name}</td>
+              return (
+                <tr key={item.id}>
+                  <td>{i + 1}</td>
+                  <td>{item.name}</td>
 
-          <td>{item.qty}</td>
+                  <td>{item.qty}</td>
 
-          <td>{item.sqft ? totalSqft : "-"}</td>
+                  <td>{item.sqft ? totalSqft : "-"}</td>
 
-          {/* SINGLE COLUMN */}
-          <td>₹{unitPrice}</td>
+                  {/* SINGLE COLUMN */}
+                  <td>₹{unitPrice}</td>
 
-          {/* TOTAL */}
-          <td>
-            <b>₹{totalPrice}</b>
-          </td>
-        </tr>
-      );
-    })}
-  </tbody>
-</table>
+                  {/* TOTAL */}
+                  <td>
+                    <b>₹{totalPrice}</b>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
 
 
-        {/* TOTAL */}
-        <div style={{ textAlign: "right", marginTop: 20 }}>
-          <div className="total-box">Grand Total: ₹{total}</div>
+
+
+        {/* TOTAL SECTION */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
+          <div className="total-summary">
+
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 20 }}>
+              <span>Sub Total:</span>
+              <span>₹{total.toFixed(2)}</span>
+            </div>
+
+            {discountPercent > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", color: "red" }}>
+                <span>Discount ({discountPercent}%)</span>
+                <span>- ₹{percentDiscountAmount.toFixed(2)}</span>
+              </div>
+            )}
+
+            {discountFlat > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", color: "red" }}>
+                <span>Flat Discount</span>
+                <span>- ₹{discountFlat.toFixed(2)}</span>
+              </div>
+            )}
+
+            <div style={{ borderTop: "1px solid #ddd", marginTop: 8, paddingTop: 8 }}>
+              <div className="total-box">
+                Grand Total: ₹{grandTotal.toFixed(2)}
+              </div>
+            </div>
+
+          </div>
         </div>
 
         {/* SIGNATURE */}
         <div className="signature">
-          <div style={{ textAlign: "right" }}>
+          <div className="signature-box">
             For {data.company}
             <div className="line"></div>
-            <div style={{ fontSize: 12, color: "#666" }}>Authorized Signatory</div>
+            <div style={{ fontSize: 12, color: "#666" }}>
+              Authorized Signatory
+            </div>
           </div>
         </div>
+
       </div>
     </>
   );

@@ -37,6 +37,21 @@ export const handleDownload = (data: any) => {
     0
   );
 
+  const discountPercent = data.discountPercent || 0;
+  const discountFlat = data.discountFlat || 0;
+
+  const subTotal = data.items.reduce((sum : number, item:any) => {
+    if (item.sqft && item.rate) {
+      return sum + item.qty * item.sqft * item.rate;
+    }
+    return sum + item.qty * item.price;
+  }, 0);
+
+  const percentDiscountAmount = (subTotal * discountPercent) / 100;
+  const finalDiscount = percentDiscountAmount + discountFlat;
+  const grandTotal = subTotal - finalDiscount;
+
+
   const win = window.open("", "", "width=900,height=700");
   if (!win) return;
 
@@ -189,17 +204,17 @@ export const handleDownload = (data: any) => {
 
   <tbody>
     ${data.items.map((item: any, i: number) => {
-      const totalSqft = item.sqft ? item.qty * item.sqft : 0;
+    const totalSqft = item.sqft ? item.qty * item.sqft : 0;
 
-      // Rate for wooden board OR normal price
-      const unitPrice = item.sqft ? item.rate || 0 : item.price;
+    // Rate for wooden board OR normal price
+    const unitPrice = item.sqft ? item.rate || 0 : item.price;
 
-      // Final total price
-      const total = item.sqft
-        ? totalSqft * (item.rate || 0)
-        : item.qty * item.price;
+    // Final total price
+    const total = item.sqft
+      ? totalSqft * (item.rate || 0)
+      : item.qty * item.price;
 
-      return `
+    return `
         <tr>
           <td>${i + 1}</td>
           <td>${item.name}</td>
@@ -209,26 +224,61 @@ export const handleDownload = (data: any) => {
           <td style="text-align:right"><b>₹${total}</b></td>
         </tr>
       `;
-    }).join("")}
+  }).join("")}
   </tbody>
 </table>
 
 
 
-        <!-- TOTAL -->
-        <div style="text-align:right; margin-top:20px;">
-          <div class="total-box">Grand Total: ₹${total}</div>
-        </div>
+        <!-- TOTAL SUMMARY -->
+<div style="display:flex; justify-content:flex-end; margin-top:20px;">
+  <div style="
+    min-width:300px;
+    border:1px solid #ddd;
+    padding:12px 15px;
+    border-radius:8px;
+    background:#f9fafb;
+    font-size:14px;
+  ">
+
+    <div style="display:flex; justify-content:space-between;">
+      <span>Sub Total</span>
+      <span>₹${subTotal.toFixed(2)}</span>
+    </div>
+
+    ${discountPercent > 0 ? `
+      <div style="display:flex; justify-content:space-between; color:red;">
+        <span>Discount (${discountPercent}%)</span>
+        <span>- ₹${percentDiscountAmount.toFixed(2)}</span>
+      </div>
+    ` : ""}
+
+    ${discountFlat > 0 ? `
+      <div style="display:flex; justify-content:space-between; color:red;">
+        <span>Flat Discount</span>
+        <span>- ₹${discountFlat.toFixed(2)}</span>
+      </div>
+    ` : ""}
+
+    <div style="border-top:1px solid #ddd; margin-top:8px; padding-top:8px; text-align:right;">
+      <div class="total-box">
+        Grand Total: ₹${grandTotal.toFixed(2)}
+      </div>
+    </div>
+
+  </div>
+</div>
+
 
         <!-- SIGNATURE -->
-        <div class="signature">
+<div class="signature" style="justify-content:flex-end;">
+  <div style="text-align:right;">
+    For ${data.company}
+    <div class="line"></div>
+    <div style="font-size:12px;color:#666">Authorized Signatory</div>
+  </div>
+</div>
 
-          <div style="text-align:right">
-            For ${data.company}
-            <div class="line"></div>
-            <div style="font-size:12px;color:#666">Authorized Signatory</div>
-          </div>
-        </div>
 
       </div>
     </body>
