@@ -5,18 +5,34 @@ import { useBillingStore } from "@/store/useBillingStore";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { COMPANY_INFO } from "@/shared/constants/company";
 import CompanyBlock from "./_components/CompanyBlock";
 import CustomerBlock from "./_components/CustomerBlock";
 import InvoiceTable from "./_components/InvoiceTable";
 import ProductBlock from "./_components/ProductBlock";
-import SignatureBlock from "./_components/SignatureBlock";
 import SummaryBlock from "./_components/SummaryBlock";
+import { handleDownload } from "@/lib/utils";
 
 export default function BillingPage() {
   const router = useRouter();
+  const ourDetail = COMPANY_INFO;
 
   const clientDetails = useBillingStore((s: any) => s.clientDetail);
   const items = useBillingStore((s: any) => s.items);
+
+  const invoiceData = {
+    company: ourDetail?.companyName,
+    location: ourDetail?.officeLocation,
+    tagLine: ourDetail?.tagLine,
+    phone: ourDetail?.officePhone,
+    client: {
+      name: clientDetails?.name || "N/A",
+      address: clientDetails?.address || "N/A",
+    },
+    items: items || [],
+    discountPercent: useBillingStore((s: any) => s.discountPercent),
+    discountFlat: useBillingStore((s: any) => s.discountFlat),
+  };
 
 
   const handleGenerateInvoice = () => {
@@ -33,13 +49,15 @@ export default function BillingPage() {
       return;
     }
 
-    if (window.innerWidth < 600) {
-      toast.warning("Invoice preview works best on desktop");
-      router.push("/billing/invoice");
-      return;
-    }
+    handleDownload(invoiceData);
 
-    router.push("/billing/invoice");
+    // if (window.innerWidth < 600) {
+    //   toast.warning("Invoice preview works best on desktop");
+    //   router.push("/billing/invoice");
+    //   return;
+    // }
+
+    // router.push("/billing/invoice");
   };
 
   return (
