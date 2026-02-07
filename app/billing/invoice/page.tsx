@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useBillingStore } from "@/store/useBillingStore";
 import { COMPANY_INFO } from "@/shared/constants/company";
-import InvoiceTemplate from "../_invoice/tempate";
+import InvoiceTemplate from "../_components/_invoice/tempate";
 import { Download, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -37,6 +37,8 @@ export default function InvoicePage() {
         },
         items: items || [],
     };
+
+    console.log(invoiceData ,"invoice" );
 
 
     return (

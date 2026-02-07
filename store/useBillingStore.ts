@@ -16,20 +16,26 @@ type BillingStore = {
   tempItem: Product;
   items: Product[];
   isEditing: boolean;
+   discountPercent: number;
 
   setItem: (data: Partial<Product>) => void;
   addOrUpdateItem: () => void;
   editItem: (item: Product) => void;
   deleteItem: (id: string) => void;
   resetTemp: () => void;
+  setDiscount: (val: number) => void;
 };
 
+// Updated emptyItem to include sqft and rate
 const emptyItem = (): Product => ({
   id: uuidv4(),
   name: "",
   description: "",
+  category: "",
   qty: 1,
   price: 0,
+  sqft: undefined, // For Wooden Boards / Finishes
+  rate: undefined, // Rate per sqft
 });
 
 export const useBillingStore = create<BillingStore>((set, get) => ({
@@ -39,6 +45,14 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     address: "",
     phone: "",
   },
+
+  discountPercent: 0,
+
+  setDiscount: (val) =>
+  set(() => ({
+    discountPercent: val,
+  })),
+
 
   setClient: (data) =>
     set((state) => ({
@@ -60,12 +74,23 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     set((state) => {
       const newItem = state.tempItem;
 
-      const exists = state.items.some(
-        (item) =>
-          item.name.trim().toLowerCase() === newItem.name.trim().toLowerCase() &&
-          item.price === newItem.price &&
-          item.id !== newItem.id
-      );
+      // Check for duplicates by name + price (or rate for sqft items)
+      const exists = state.items.some((item) => {
+        if (newItem.sqft && newItem.rate) {
+          // Wooden Boards / Finishes comparison by name + rate
+          return (
+            item.name.trim().toLowerCase() === newItem.name.trim().toLowerCase() &&
+            item.rate === newItem.rate &&
+            item.id !== newItem.id
+          );
+        } else {
+          return (
+            item.name.trim().toLowerCase() === newItem.name.trim().toLowerCase() &&
+            item.price === newItem.price &&
+            item.id !== newItem.id
+          );
+        }
+      });
 
       if (exists) {
         alert("⚠️ Product already added!");
@@ -91,11 +116,14 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     }),
 
   // EDIT
-  editItem: (item) =>
+  editItem: (item) => {
+    console.log(item,"SINGLE_ITEM"),
     set(() => ({
       tempItem: item,
       isEditing: true,
-    })),
+
+    }))
+  },
 
   // DELETE
   deleteItem: (id) =>

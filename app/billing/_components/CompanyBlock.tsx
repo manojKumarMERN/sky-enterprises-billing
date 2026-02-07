@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { COMPANY_INFO } from "@/shared/constants/company";
 
 export default function CompanyBlock() {
     const date = new Date().toLocaleDateString();
@@ -16,8 +17,9 @@ export default function CompanyBlock() {
 
                     </div>
                     <div className="flex flex-col justify-center" >
-                    <h1 className="text-2xl font-bold">SKY Enterprises and Decors</h1>
-                    <p className="text-sm text-muted-foreground">Tiruchengode</p>
+                    <h1 className="text-2xl font-bold">{COMPANY_INFO?.companyName}</h1>
+                    <p className="text-sm text-muted-foreground italic ">{COMPANY_INFO?.tagLine}</p>
+                    <p className="text-sm text-muted-foreground">{COMPANY_INFO?.officeLocation}</p>
 
                     </div>
                 </div>

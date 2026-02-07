@@ -1,5 +1,5 @@
 export const COMPANY_INFO = {
-        companyName: "SKY INTERIORS & DECORS PVT LTD",
+        companyName: "SKY INTERIORS & DECORS",
         companyLogo: "/logo.jpg",
         tagLine: "Precious and perfection in every detail",
         officeLocation: "tiruchengode,Namakkal",

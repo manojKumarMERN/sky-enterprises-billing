@@ -18,12 +18,6 @@ const WOODEN_BOARDS = [
     qty: 1
   },
   {
-    id: "woodBoard4",
-    name: "Stainless Steel",
-    price: 8000,
-    qty: 1
-  },
-  {
     id: "woodBoard5",
     name: "Particle Board",
     price: 1500,
@@ -145,3 +139,13 @@ const BED_HARDWARE = [
     qty: 1
   }
 ];
+
+const ITEMS_BY_CATEGORY = {
+  "Wooden Boards": WOODEN_BOARDS,
+  Finishes: FINISHES,
+  Countertops: COUNTERTOPS,
+  Hardware: HARDWARE,
+  "Bed Hardware": BED_HARDWARE
+};
+
+export { ITEMS_BY_CATEGORY };

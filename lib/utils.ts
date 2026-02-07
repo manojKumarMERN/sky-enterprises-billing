@@ -6,10 +6,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const useTotalAmount = () =>
-  useBillingStore((s) =>
-    s.items.reduce((sum, i) => sum + i.qty * i.price, 0)
-  );
+
+export const useTotalAmount = () => {
+  const items = useBillingStore((s: any) => s.items);
+  const discount = useBillingStore((s: any) => s.discountPercent);
+
+  const total = items.reduce((sum: number, item: any) => {
+    if (item.sqft && item.rate) {
+      return sum + item.qty * item.sqft * item.rate;
+    }
+    return sum + item.qty * item.price;
+  }, 0);
+
+  const discountAmount = (total * discount) / 100;
+  return {
+    total,
+    discountAmount,
+    finalTotal: total - discountAmount,
+  };
+};
+
 
 export const handleDownload = (data: any) => {
   const today = new Date();
@@ -33,14 +49,14 @@ export const handleDownload = (data: any) => {
         body {
           font-family: "Segoe UI", Arial, sans-serif;
           background: #f4f6fb;
-          padding: 20px;
+          padding: 15px;
         }
 
         .invoice-box {
           max-width: 900px;
           margin: auto;
           background: white;
-          padding: 30px;
+          padding: 20px;
           border-radius: 12px;
           box-shadow: 0 10px 30px rgba(0,0,0,0.12);
         }
@@ -160,27 +176,44 @@ export const handleDownload = (data: any) => {
 
         <!-- TABLE -->
         <table>
-          <thead>
-            <tr>
-              <th>S.No</th>
-              <th>Product / Description</th>
-              <th>Qty</th>
-              <th>Price (₹)</th>
-              <th>Total (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.items.map((item: any, i: number) => `
-              <tr>
-                <td>${i + 1}</td>
-                <td>${item.name}</td>
-                <td style="text-align:center">${item.qty}</td>
-                <td style="text-align:right">₹${item.price}</td>
-                <td style="text-align:right"><b>₹${item.qty * item.price}</b></td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
+  <thead>
+    <tr>
+      <th>S.No</th>
+      <th>Product</th>
+      <th>Qty</th>
+      <th>Total Sqft</th>
+      <th>Price / Rate (₹)</th>
+      <th>Total (₹)</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    ${data.items.map((item: any, i: number) => {
+      const totalSqft = item.sqft ? item.qty * item.sqft : 0;
+
+      // Rate for wooden board OR normal price
+      const unitPrice = item.sqft ? item.rate || 0 : item.price;
+
+      // Final total price
+      const total = item.sqft
+        ? totalSqft * (item.rate || 0)
+        : item.qty * item.price;
+
+      return `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${item.name}</td>
+          <td style="text-align:center">${item.qty}</td>
+          <td style="text-align:center">${item.sqft ? totalSqft : "-"}</td>
+          <td style="text-align:right">₹${unitPrice}</td>
+          <td style="text-align:right"><b>₹${total}</b></td>
+        </tr>
+      `;
+    }).join("")}
+  </tbody>
+</table>
+
+
 
         <!-- TOTAL -->
         <div style="text-align:right; margin-top:20px;">
@@ -189,10 +222,6 @@ export const handleDownload = (data: any) => {
 
         <!-- SIGNATURE -->
         <div class="signature">
-          <div>
-            Customer Signature
-            <div class="line"></div>
-          </div>
 
           <div style="text-align:right">
             For ${data.company}

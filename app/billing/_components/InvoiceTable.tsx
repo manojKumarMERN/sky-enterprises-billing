@@ -25,43 +25,70 @@ export default function InvoiceTable() {
             <TableHead>S.No</TableHead>
             <TableHead>Product</TableHead>
             <TableHead>Qty</TableHead>
-            <TableHead>Price</TableHead>
+            <TableHead>Sqft</TableHead>
+            <TableHead>Price / Rate</TableHead>
             <TableHead>Total</TableHead>
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {items.map((item: any, i: number) => (
-            <TableRow key={item.id} className={`hover:bg-muted/50 transition ${item?.id === useBillingStore.getState().tempItem.id ? "bg-muted" : "" } `}>
-              <TableCell>{i + 1}</TableCell>
-              <TableCell className="font-medium">{item.name}</TableCell>
-              <TableCell>{item.qty}</TableCell>
-              <TableCell>₹{item.price}</TableCell>
-              <TableCell className="font-semibold">
-                ₹{item.qty * item.price}
-              </TableCell>
+          {items.map((item: any, i: number) => {
+            const qty = item.qty || 1;
+            const sqft = item.sqft || 0;
 
-              {/* ACTION BUTTONS */}
-              <TableCell className="text-right space-x-2">
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={() => editItem(item)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
+            // If sqft exists → rate, else normal price
+            const unitPrice = item.sqft ? item.rate || 0 : item.price || 0;
 
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  onClick={() => deleteItem(item.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+            // Total sqft
+            const totalSqft = item.sqft ? qty * sqft : 0;
+
+            // Final total price
+            const totalPrice = item.sqft
+              ? totalSqft * (item.rate || 0)
+              : qty * (item.price || 0);
+
+            return (
+              <TableRow
+                key={item.id}
+                className={`hover:bg-muted/50 transition ${
+                  item?.id === useBillingStore.getState().tempItem.id
+                    ? "bg-muted"
+                    : ""
+                }`}
+              >
+                <TableCell>{i + 1}</TableCell>
+                <TableCell className="font-medium">{item.name}</TableCell>
+
+                {/* Qty */}
+                <TableCell>{qty}</TableCell>
+
+                {/* Sqft */}
+                <TableCell>{item.sqft ? totalSqft : "-"}</TableCell>
+
+                {/* Price / Rate */}
+                <TableCell>₹{unitPrice}</TableCell>
+
+                {/* Total */}
+                <TableCell className="font-semibold">₹{totalPrice}</TableCell>
+
+                {/* Actions */}
+                <TableCell className="text-right space-x-2">
+                  <Button size="icon" variant="outline" onClick={() => editItem(item)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={() => deleteItem(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

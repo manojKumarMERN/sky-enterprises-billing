@@ -21,7 +21,7 @@ export default function BillingPage() {
 
   const handleGenerateInvoice = () => {
     const noClient =
-      !clientDetails?.name?.trim() || !clientDetails?.address?.trim();    const noItems = !items || items.length < 1;
+      !clientDetails?.name?.trim() || !clientDetails?.address?.trim(); const noItems = !items || items.length < 1;
 
     if (noClient) {
       toast.error("Please enter customer details");
@@ -39,7 +39,7 @@ export default function BillingPage() {
       return;
     }
 
-      router.push("/billing/invoice");
+    router.push("/billing/invoice");
   };
 
   return (
@@ -55,12 +55,11 @@ export default function BillingPage() {
 
       <div className="grid md:grid-cols-2 gap-6">
         <SummaryBlock />
-        <SignatureBlock />
+        <Button variant="secondary" onClick={handleGenerateInvoice}>
+          Generate Invoice
+        </Button>
       </div>
 
-      <Button variant="secondary" onClick={handleGenerateInvoice}>
-        Generate Invoice
-      </Button>
     </div>
   );
 }
