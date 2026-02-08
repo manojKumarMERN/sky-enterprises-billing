@@ -26,7 +26,7 @@ export default function SummaryBlock() {
 
     return (
         <Card>
-            <CardContent className="p-5 shadow-md space-y-4">
+            <CardContent className="p-5 space-y-4">
 
 
                     {/* SUBTOTAL */}
