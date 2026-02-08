@@ -27,7 +27,7 @@ export const useTotalAmount = () => {
 };
 
 
-export const handleDownload = (data: any) => {
+export const handleDownload = (data: any, saveInvoiceToLocal: (d: any) => void) => {
   const today = new Date();
   const date = today.toLocaleDateString();
   const day = today.toLocaleString("en-IN", { weekday: "long" });
@@ -40,7 +40,7 @@ export const handleDownload = (data: any) => {
   const discountPercent = data.discountPercent || 0;
   const discountFlat = data.discountFlat || 0;
 
-  const subTotal = data.items.reduce((sum : number, item:any) => {
+  const subTotal = data.items.reduce((sum: number, item: any) => {
     if (item.sqft && item.rate) {
       return sum + item.qty * item.sqft * item.rate;
     }
@@ -51,6 +51,10 @@ export const handleDownload = (data: any) => {
   const finalDiscount = percentDiscountAmount + discountFlat;
   const grandTotal = subTotal - finalDiscount;
 
+  const invoiceNo = saveInvoiceToLocal({
+    ...data,
+    totals: { subTotal, discountPercent, discountFlat, grandTotal },
+  });
 
   const win = window.open("", "", "width=900,height=700");
   if (!win) return;
@@ -190,17 +194,22 @@ tr:nth-child(even) {
     <div>Phone: ${data.phone}</div>
   </div>
 
-  <div>
-    <div><b>Date:</b> ${date}</div>
-    <div><b>Day:</b> ${day}</div>
+ <div style="text-align:right">
+  <div style="font-size:16px;font-weight:bold;color:#111">
+    Invoice No: <span style="color:#2563eb">${invoiceNo}</span>
   </div>
+  <div><b>Date:</b> ${date}</div>
+  <div><b>Day:</b> ${day}</div>
+</div>
+
 </div>
 
 <!-- CLIENT -->
 <div class="bill-box">
   <b>Bill To</b><br/>
   Name: ${data.client.name}<br/>
-  Address: ${data.client.address}
+  Address: ${data.client.address}<br/>
+  phone: ${data.client.phone}
 </div>
 
 <!-- TABLE -->
@@ -218,11 +227,11 @@ tr:nth-child(even) {
 
 <tbody>
 ${data.items.map((item: any, i: number) => {
-  const totalSqft = item.sqft ? item.qty * item.sqft : 0;
-  const unitPrice = item.sqft ? item.rate || 0 : item.price;
-  const total = item.sqft ? totalSqft * (item.rate || 0) : item.qty * item.price;
+    const totalSqft = item.sqft ? item.qty * item.sqft : 0;
+    const unitPrice = item.sqft ? item.rate || 0 : item.price;
+    const total = item.sqft ? totalSqft * (item.rate || 0) : item.qty * item.price;
 
-  return `
+    return `
   <tr>
     <td>${i + 1}</td>
     <td>${item.name}</td>
@@ -231,7 +240,7 @@ ${data.items.map((item: any, i: number) => {
     <td style="text-align:right">₹${unitPrice}</td>
     <td style="text-align:right"><b>₹${total}</b></td>
   </tr>`;
-}).join("")}
+  }).join("")}
 </tbody>
 </table>
 
@@ -288,10 +297,10 @@ ${data.items.map((item: any, i: number) => {
 
   win.document.close();
 
-setTimeout(() => {
-  win.focus();
-  win.print();
-  win.close();
-}, 500);
+  setTimeout(() => {
+    win.focus();
+    win.print();
+    win.close();
+  }, 500);
 
 };

@@ -21,6 +21,10 @@ type BillingStore = {
   discountPercent: number;
   discountFlat: number;
 
+  editingInvoiceNo: string | null;
+  setEditingInvoice: (no: string | null) => void;
+
+
   setDiscountEnabled: (v: boolean) => void;
   setDiscountPercent: (v: number) => void;
   setDiscountFlat: (v: number) => void;
@@ -30,6 +34,16 @@ type BillingStore = {
   editItem: (item: Product) => void;
   deleteItem: (id: string) => void;
   resetTemp: () => void;
+  generateInvoiceNumber: () => string;
+
+  saveInvoiceToLocal: (invoiceData: any) => string;
+  cleanOldInvoices: () => void;
+  getSavedInvoices: () => any[];
+
+  loadDraftInvoice: (data: any) => void;
+  clearDraftInvoice: () => void;
+
+
 };
 
 // Updated emptyItem to include sqft and rate
@@ -51,6 +65,9 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     address: "",
     phone: "",
   },
+
+  editingInvoiceNo: null,
+
 
   discountEnabled: false,
   discountPercent: 0,
@@ -124,12 +141,12 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
   // EDIT
   editItem: (item) => {
-    console.log(item,"SINGLE_ITEM"),
-    set(() => ({
-      tempItem: item,
-      isEditing: true,
+    console.log(item, "SINGLE_ITEM"),
+      set(() => ({
+        tempItem: item,
+        isEditing: true,
 
-    }))
+      }))
   },
 
   // DELETE
@@ -150,4 +167,72 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       tempItem: emptyItem(),
       isEditing: false,
     }),
+
+  generateInvoiceNumber: () =>
+    `SKY-INV-${Date.now()}`, // Better readable than uuid
+
+  saveInvoiceToLocal: (invoiceData) => {
+    const { editingInvoiceNo } = get();
+    let invoiceNo = editingInvoiceNo;
+
+    // If NOT editing → create new
+    if (!invoiceNo) {
+      invoiceNo = get().generateInvoiceNumber();
+    }
+
+    const expiryDays = 30;
+    const expiryTime = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
+
+    const dataToSave = {
+      invoiceNo,
+      data: invoiceData,
+      createdAt: Date.now(),
+      expiryTime,
+      updatedAt: Date.now(),
+    };
+
+    localStorage.setItem(`invoice_${invoiceNo}`, JSON.stringify(dataToSave));
+
+    return invoiceNo;
+  },
+
+
+  cleanOldInvoices: () => {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("invoice_")) {
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+
+        const inv = JSON.parse(raw);
+        if (Date.now() > inv.expiryTime) {
+          localStorage.removeItem(key);
+        }
+      }
+    });
+  },
+
+  getSavedInvoices: () => {
+    return Object.keys(localStorage)
+      .filter((k) => k.startsWith("invoice_"))
+      .map((k) => JSON.parse(localStorage.getItem(k) || "{}"));
+  },
+
+  loadDraftInvoice: (data) => {
+    set({
+      clientDetail: data.client,
+      items: data.items,
+      discountPercent: data.discountPercent || 0,
+      discountFlat: data.discountFlat || 0,
+    });
+  },
+
+  clearDraftInvoice: () => {
+    localStorage.removeItem("draft_invoice");
+  },
+
+
+  setEditingInvoice: (no) => set({ editingInvoiceNo: no }),
+
+
+
 }));
