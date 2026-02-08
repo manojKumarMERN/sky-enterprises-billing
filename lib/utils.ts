@@ -287,5 +287,11 @@ ${data.items.map((item: any, i: number) => {
   `);
 
   win.document.close();
+
+setTimeout(() => {
+  win.focus();
   win.print();
+  win.close();
+}, 500);
+
 };

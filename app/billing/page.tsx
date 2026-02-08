@@ -20,6 +20,9 @@ export default function BillingPage() {
   const clientDetails = useBillingStore((s: any) => s.clientDetail);
   const items = useBillingStore((s: any) => s.items);
 
+  const discountPercent = useBillingStore((s: any) => s.discountPercent);
+  const discountFlat = useBillingStore((s: any) => s.discountFlat);
+
   const invoiceData = {
     company: ourDetail?.companyName,
     location: ourDetail?.officeLocation,
@@ -29,10 +32,11 @@ export default function BillingPage() {
       name: clientDetails?.name || "N/A",
       address: clientDetails?.address || "N/A",
     },
-    items: items || [],
-    discountPercent: useBillingStore((s: any) => s.discountPercent),
-    discountFlat: useBillingStore((s: any) => s.discountFlat),
+    items,
+    discountPercent,
+    discountFlat,
   };
+
 
 
   const handleGenerateInvoice = () => {
