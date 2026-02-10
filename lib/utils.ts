@@ -79,7 +79,7 @@ body {
 
 /* MAIN INVOICE BOX */
 .invoice-box {
-  max-width: 900px;
+  max-width: 210mm;
   margin: auto;
   background: white;
   padding: 20px;
@@ -242,15 +242,49 @@ tr:nth-child(even) {
 
 
 /* PRINT MODE */
+
+@page {
+  size: A4;
+  margin: 10mm; /* Adjust margin */
+}
+
 @media print {
-  body { background: white; }
-  .invoice-box { box-shadow: none; border: none; }
+ html, body {
+    width: 210mm;
+    height: 297mm;
+    
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+   .invoice-box {
+    width: 100%;
+    max-width: 100%;
+    min-height: 95vh;
+    box-shadow: none;
+    border-radius: 0;
+  }
+    
+  .invoice-footer {
+    position: fixed;
+    bottom: 10mm;
+    right: 10mm;
+  }
+
   .floating-download {
     display: none;
   }
      .menu-btn,
   .menu-dropdown {
     display: none;
+  }
+
+  table, tr, td, th {
+    page-break-inside: avoid;
   }
 }
 </style>
