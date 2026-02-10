@@ -146,7 +146,7 @@ body {
   inset: 0;
   background: url('/logo.png') no-repeat center;
   background-size: 400px;
-  opacity: 0.38;
+  opacity: 0.30;
   z-index: 0;
 }
 
@@ -169,7 +169,7 @@ body {
 h1 {
   margin: 0;
   font-size: 20px;
-  color: #2563eb;
+  color: #eb722c;
 }
 
 /* BILL BOX */
@@ -281,11 +281,11 @@ tr:nth-child(even) { background: #f9fafb; }
 <div class="watermark"></div>
 
 <div class="header">
-  <div style="display:flex;align-items:center" >
+  <div style="display:flex;gap:10px ; align-items:center" >
     <img src="/logo.png" class="logo" />
     <div>
     <div>
-    <h1>${data.company}</h1>
+    <h1 >${data.company}</h1>
     <div>${data.tagLine}</div>
     </div>
     <div>
@@ -356,7 +356,10 @@ ${data.items.map((item: any, i: number) => {
 
     <div style="display:flex; justify-content:space-between;">
       <span>Sub Total</span>
-      <span>₹${subTotal.toFixed(2)}</span>
+      <span>₹${subTotal.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}</span>
     </div>
 
     ${discountPercent > 0 ? `
