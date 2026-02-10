@@ -114,6 +114,10 @@ export const handleDownload = (data: any, saveInvoiceToLocal: (d: any) => void) 
   win.document.write(`
 <html>
 <head>
+<!-- Inter Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <title>Invoice</title>
 <style>
 
@@ -123,11 +127,13 @@ export const handleDownload = (data: any, saveInvoiceToLocal: (d: any) => void) 
   -webkit-print-color-adjust: exact;
 }
 
+
 body {
-  font-family: Segoe UI, Arial;
+  font-family: Inter, Arial;
   margin: 0;
   padding: 0;
-  background: #f4f6fb;
+  background: #0f172a;
+  color: #f9fafb;
 }
 
 /* PAGE */
@@ -136,9 +142,13 @@ body {
   min-height: 297mm;
   padding: 12mm;
   margin: auto;
-  background: white;
   display: flex;
   flex-direction: column;
+  position: relative;
+
+  background: radial-gradient(circle at top right, rgba(255,255,255,0.12), transparent 40%),
+              radial-gradient(circle at bottom left, rgba(255,255,255,0.08), transparent 50%),
+              #345051;
 }
 
 .watermark {
@@ -160,25 +170,31 @@ body {
 .header {
   display: flex;
   justify-content: space-between;
-  border-bottom: 3px solid #2563eb;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(255,255,255,0.15);
 }
 
 .logo { height: 65px; }
 
 h1 {
   margin: 0;
-  font-size: 20px;
-  color: #eb722c;
+  font-size: 22px;
+  color: #ffb703;
+  font-weight: 700;
+}
+
+.header div {
+  font-size: 13px;
+  color: #e5e7eb;
 }
 
 /* BILL BOX */
 .bill-box {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  padding: 10px;
-  border-radius: 6px;
-  margin: 10px 0;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 12px;
+  border-radius: 10px;
+  margin: 12px 0;
 }
 
 /* TABLE */
@@ -186,20 +202,35 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  margin-top: 10px;
 }
 
 th {
-  background: #2563eb;
+  background: #282e31;
   color: white;
-  padding: 8px;
+  padding: 10px;
+  font-weight: 600;
 }
 
 td {
-  border: 1px solid #ddd;
-  padding: 6px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
 }
 
-tr:nth-child(even) { background: #f9fafb; }
+tr:nth-child(even) {
+  background: rgba(255,255,255,0.03);
+}
+
+/* TOTAL SUMMARY */
+.total-summary {
+  width: 100%;
+  border-radius: 12px;
+  padding: 16px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.2);
+  font-size: 14px;
+}
+
 
 /* TOTAL BOX */
 .total-box {
@@ -210,6 +241,77 @@ tr:nth-child(even) { background: #f9fafb; }
   border-radius: 6px;
   font-weight: bold;
 }
+.total-summary-box {
+width: 100%;
+  padding: 18px 20px;
+  border-radius: 18px;
+
+  /* Glass Effect */
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+
+  font-size: 14px;
+  color: #f9fafb;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine layer */
+.total-summary-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.35),
+    transparent 40%
+  );
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+/* Rows */
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-weight: 500;
+  color: #f8fafc;
+}
+
+/* Discount red */
+.discount {
+  color: #f87171;
+}
+
+/* Divider */
+.summary-divider {
+  border-top: 1px dashed rgba(255,255,255,0.3);
+  margin: 10px 0;
+}
+
+/* Grand total */
+.grand-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.grand-total-row span:last-child {
+  color: #22c55e;
+  font-family: "JetBrains Mono", monospace; /* finance style */
+}
+
+/* Amount in words */
+.amount-words {
+  margin-top: 6px;
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255,255,255,0.8);
+}
+
 
 /* FOOTER */
 .footer {
@@ -220,7 +322,8 @@ tr:nth-child(even) { background: #f9fafb; }
 /* SIGN */
 .signature {
   margin-top: 20px;
-  text-align: right;
+  font-size: 13px;
+  color: #e5e7eb;
 }
 
 .line {
@@ -262,6 +365,7 @@ tr:nth-child(even) { background: #f9fafb; }
     background-attachment: fixed !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    background-color: #345051z !important;
   }
 
 }
@@ -344,50 +448,41 @@ ${data.items.map((item: any, i: number) => {
 <!-- FOOTER LAST PAGE -->
 <div class="footer">
 
-<div style="display:flex; justify-content:flex-end; margin-top:15px;">
-  <div style="
-    width:100%;
-    border-radius:12px;
-    padding:16px;
-    background:linear-gradient(135deg,#f8fafc,#eef2ff);
-    border:1px solid #c7d2fe;
-    font-size:14px;
-  ">
+<div style="display:flex; justify-content:flex-end; margin-top:18px;">
+  <div class="total-summary-box">
 
-    <div style="display:flex; justify-content:space-between;">
+    <div class="summary-row">
       <span>Sub Total</span>
-      <span>₹${subTotal.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}</span>
+      <span>₹${subTotal.toLocaleString("en-IN",{minimumFractionDigits:2})}</span>
     </div>
 
     ${discountPercent > 0 ? `
-    <div style="display:flex; justify-content:space-between; color:#dc2626;">
+    <div class="summary-row discount">
       <span>Discount (${discountPercent}%)</span>
-      <span>- ₹${percentDiscountAmount.toFixed(2)}</span>
+      <span>- ₹${percentDiscountAmount.toLocaleString("en-IN",{minimumFractionDigits:2})}</span>
     </div>` : ""}
 
     ${discountFlat > 0 ? `
-    <div style="display:flex; justify-content:space-between; color:#dc2626;">
+    <div class="summary-row discount">
       <span>Flat Discount</span>
-      <span>- ₹${discountFlat.toFixed(2)}</span>
+      <span>- ₹${discountFlat.toLocaleString("en-IN",{minimumFractionDigits:2})}</span>
     </div>` : ""}
 
-     <div style="font-size:18px; font-weight:bold;">
-    Grand Total: ₹${grandTotal.toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}
-  </div>
+    <div class="summary-divider"></div>
 
-    <!-- Amount in Words -->
-    <div style="margin-top:6px; font-size:13px; font-style:italic; color:#374151;">
+    <div class="grand-total-row">
+      <span>Grand Total</span>
+      <span>₹${grandTotal.toLocaleString("en-IN",{minimumFractionDigits:2})}</span>
+    </div>
+
+    <div class="amount-words">
       Amount in Words: <b>${amountInWords(grandTotal)}</b>
     </div>
 
   </div>
 </div>
+
+
 
 
 
