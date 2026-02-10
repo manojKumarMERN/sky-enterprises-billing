@@ -324,7 +324,7 @@ ${data.items.map((item: any, i: number) => {
 <div class="invoice-footer">
 
 <!-- TOTAL SUMMARY -->
-<div style="display:flex; justify-content:flex-end; margin-top:20px;">
+<div style="display:flex; justify-content:flex-end; margin-top:10px;">
   <div style="min-width:300px; border:1px solid #ddd; padding:12px 15px; border-radius:8px; background:#f9fafb; font-size:14px;">
 
     <div style="display:flex; justify-content:space-between;">
