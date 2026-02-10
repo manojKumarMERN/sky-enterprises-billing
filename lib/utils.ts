@@ -159,13 +159,13 @@ tr:nth-child(even) {
 .signature {
   display: flex;
   justify-content: flex-end;
-  margin-top: 35px;
+  margin-top: 20px;
 }
 
 .line {
   border-top: 1px solid #000;
   width: 200px;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 /* FOOTER PUSH */
