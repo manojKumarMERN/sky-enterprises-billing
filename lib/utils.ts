@@ -173,10 +173,29 @@ tr:nth-child(even) {
   margin-top: auto; /* THIS PUSHES FOOTER TO BOTTOM */
 }
 
+.floating-download {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: #2563eb;
+  color: white;
+  border-radius: 50px;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+
 /* PRINT MODE */
 @media print {
   body { background: white; }
   .invoice-box { box-shadow: none; border: none; }
+  .floating-download {
+    display: none;
+  }
 }
 </style>
 </head>
@@ -285,11 +304,22 @@ ${data.items.map((item: any, i: number) => {
     <div class="line"></div>
     <div style="font-size:12px;color:#666">Authorized Signatory</div>
   </div>
+  
+
 </div>
+<button onclick="downloadPDF()" class="floating-download">
+  Download PDF
+</button>
+
 
 </div> <!-- FOOTER END -->
-
 </div>
+<script>
+function downloadPDF() {
+  window.print();
+}
+</script>
+
 </body>
 </html>
 
