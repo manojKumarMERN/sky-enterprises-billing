@@ -173,19 +173,71 @@ tr:nth-child(even) {
   margin-top: auto; /* THIS PUSHES FOOTER TO BOTTOM */
 }
 
-.floating-download {
+.menu-btn {
   position: fixed;
-  bottom: 20px;
+  top: 20px;
   right: 20px;
-  padding: 12px 20px;
-  background: #2563eb;
-  color: white;
-  border-radius: 50px;
+  background: white;
   border: none;
-  font-size: 14px;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 22px;
   font-weight: bold;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
   cursor: pointer;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bigger on mobile */
+@media (max-width: 600px) {
+  .menu-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+  }
+}
+
+/* MENU DROPDOWN */
+.menu-dropdown {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  overflow: hidden;
+  transform: scale(0.9);
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s ease;
+}
+
+/* Show menu */
+.menu-dropdown.show {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.menu-item {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+}
+
+.menu-item:hover {
+  background: #f4f6fb;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
 }
 
 
@@ -194,6 +246,10 @@ tr:nth-child(even) {
   body { background: white; }
   .invoice-box { box-shadow: none; border: none; }
   .floating-download {
+    display: none;
+  }
+     .menu-btn,
+  .menu-dropdown {
     display: none;
   }
 }
@@ -307,17 +363,45 @@ ${data.items.map((item: any, i: number) => {
   
 
 </div>
-<button onclick="downloadPDF()" class="floating-download">
-  Download PDF
-</button>
+<!-- 3 DOT BUTTON -->
+<button class="menu-btn" onclick="toggleMenu()">⋮</button>
+
+<!-- DROPDOWN MENU -->
+<div id="menuDropdown" class="menu-dropdown">
+  <div class="menu-item" onclick="downloadPDF()">
+     Download PDF
+  </div>
+  <div class="menu-item" onclick="editInvoice()">
+     Edit Invoice
+  </div>
+</div>
+
 
 
 </div> <!-- FOOTER END -->
 </div>
 <script>
+function toggleMenu() {
+  const menu = document.getElementById("menuDropdown");
+  menu.classList.toggle("show");
+}
+
+// Close when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".menu-btn") && !e.target.closest(".menu-dropdown")) {
+    document.getElementById("menuDropdown").classList.remove("show");
+  }
+});
+
 function downloadPDF() {
   window.print();
 }
+
+// CHANGE THIS URL TO YOUR NEXT.JS EDIT PAGE
+function editInvoice() {
+  window.location.href = "/billing?edit=" + "${invoiceNo}";
+}
+
 </script>
 
 </body>
