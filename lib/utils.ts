@@ -356,7 +356,6 @@ ${data.items.map((item: any, i: number) => {
 <!-- SIGNATURE -->
 <div class="signature">
   <div style="text-align:right;">
-    For ${data.company}
     <div class="line"></div>
     <div style="font-size:12px;color:#666">Authorized Signatory</div>
   </div>
