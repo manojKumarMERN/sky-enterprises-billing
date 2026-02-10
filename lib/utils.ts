@@ -299,8 +299,8 @@ ${data.items.map((item: any, i: number) => {
 
   setTimeout(() => {
     win.focus();
-    win.print();
-    win.close();
+    // win.print();
+    // win.close();
   }, 500);
 
 };
