@@ -26,11 +26,71 @@ export const useTotalAmount = () => {
   };
 };
 
+function numberToWords(num: number) {
+  if (num === 0) return "Zero";
+
+  const ones = [
+    "", "One", "Two", "Three", "Four", "Five",
+    "Six", "Seven", "Eight", "Nine", "Ten",
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+    "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+  ];
+
+  const tens = [
+    "", "", "Twenty", "Thirty", "Forty",
+    "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+  ];
+
+  function convertBelowHundred(n: number) {
+    if (n < 20) return ones[n];
+    return tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
+  }
+
+  function convertBelowThousand(n: number) {
+    if (n < 100) return convertBelowHundred(n);
+    return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + convertBelowHundred(n % 100) : "");
+  }
+
+  function convertIndian(n: number) {
+    let result = "";
+    if (n >= 10000000) {
+      result += convertBelowThousand(Math.floor(n / 10000000)) + " Crore ";
+      n %= 10000000;
+    }
+    if (n >= 100000) {
+      result += convertBelowThousand(Math.floor(n / 100000)) + " Lakh ";
+      n %= 100000;
+    }
+    if (n >= 1000) {
+      result += convertBelowThousand(Math.floor(n / 1000)) + " Thousand ";
+      n %= 1000;
+    }
+    if (n > 0) {
+      result += convertBelowThousand(n);
+    }
+    return result.trim();
+  }
+
+  return convertIndian(num);
+}
+
+function amountInWords(amount: number) {
+  const rupees = Math.floor(amount);
+  const paise = Math.round((amount - rupees) * 100);
+
+  let words = numberToWords(rupees) + " Rupees";
+  if (paise > 0) words += " and " + numberToWords(paise) + " Paise";
+
+  return words + " Only";
+}
+
+
 
 export const handleDownload = (data: any, saveInvoiceToLocal: (d: any) => void) => {
   const today = new Date();
   const date = today.toLocaleDateString();
   const day = today.toLocaleString("en-IN", { weekday: "long" });
+  const baseUrl = window.location.origin;
 
   const discountPercent = data.discountPercent || 0;
   const discountFlat = data.discountFlat || 0;
@@ -81,6 +141,21 @@ body {
   flex-direction: column;
 }
 
+.watermark {
+  position: absolute;
+  inset: 0;
+  background: url('/logo.png') no-repeat center;
+  background-size: 400px;
+  opacity: 0.38;
+  z-index: 0;
+}
+
+.page {
+  position: relative;
+}
+
+
+
 /* HEADER */
 .header {
   display: flex;
@@ -89,7 +164,7 @@ body {
   padding-bottom: 10px;
 }
 
-.logo { height: 50px; }
+.logo { height: 65px; }
 
 h1 {
   margin: 0;
@@ -176,11 +251,19 @@ tr:nth-child(even) { background: #f9fafb; }
 }
 
 @media print {
-  body { background: white; }
   .page { box-shadow: none; }
   .menu-btn { display: none; }
 
   table, tr, td, th { page-break-inside: avoid; }
+
+  body {
+    background: url('${baseUrl}/logo.png') no-repeat center center !important;
+    background-size: 45% !important;
+    background-attachment: fixed !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
 }
 
 /* PAGE NUMBER */
@@ -195,13 +278,21 @@ tr:nth-child(even) { background: #f9fafb; }
 
 <div class="page">
 
+<div class="watermark"></div>
+
 <div class="header">
-  <div>
+  <div style="display:flex;align-items:center" >
     <img src="/logo.png" class="logo" />
+    <div>
+    <div>
     <h1>${data.company}</h1>
     <div>${data.tagLine}</div>
+    </div>
+    <div>
     <div>${data.location}</div>
     <div>Phone: ${data.phone}</div>
+    </div>
+    </div>
   </div>
 
   <div style="text-align:right">
@@ -231,7 +322,7 @@ tr:nth-child(even) { background: #f9fafb; }
 </thead>
 <tbody>
 ${data.items.map((item: any, i: number) => {
-   const sqft = item.sqft ? Number(item.qty) * (item.sqft as number) : "-";
+    const sqft = item.sqft ? Number(item.qty) * (item.sqft as number) : "-";
     const rate = item.sqft ? item.rate : item.price;
     const total = item.sqft ? sqft as number * item.rate : item.qty * item.price;
     return `
@@ -241,7 +332,10 @@ ${data.items.map((item: any, i: number) => {
   <td>${item.qty}</td>
   <td>${sqft}</td>
   <td>₹${rate}</td>
-  <td>₹${total}</td>
+  <td>₹${total.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}</td>
 </tr>`;
   }).join("")}
 </tbody>
@@ -250,14 +344,49 @@ ${data.items.map((item: any, i: number) => {
 <!-- FOOTER LAST PAGE -->
 <div class="footer">
 
-<div style="display:flex; justify-content:flex-end;">
-  <div style="border:1px solid #ddd;padding:10px;border-radius:6px;">
-    <div>Sub Total: ₹${subTotal.toFixed(2)}</div>
-    ${discountPercent > 0 ? `<div style="color:red">Discount: -₹${percentDiscountAmount.toFixed(2)}</div>` : ""}
-    ${discountFlat > 0 ? `<div style="color:red">Flat Discount: -₹${discountFlat.toFixed(2)}</div>` : ""}
-    <div class="total-box">Grand Total: ₹${grandTotal.toFixed(2)}</div>
+<div style="display:flex; justify-content:flex-end; margin-top:15px;">
+  <div style="
+    width:100%;
+    border-radius:12px;
+    padding:16px;
+    background:linear-gradient(135deg,#f8fafc,#eef2ff);
+    border:1px solid #c7d2fe;
+    font-size:14px;
+  ">
+
+    <div style="display:flex; justify-content:space-between;">
+      <span>Sub Total</span>
+      <span>₹${subTotal.toFixed(2)}</span>
+    </div>
+
+    ${discountPercent > 0 ? `
+    <div style="display:flex; justify-content:space-between; color:#dc2626;">
+      <span>Discount (${discountPercent}%)</span>
+      <span>- ₹${percentDiscountAmount.toFixed(2)}</span>
+    </div>` : ""}
+
+    ${discountFlat > 0 ? `
+    <div style="display:flex; justify-content:space-between; color:#dc2626;">
+      <span>Flat Discount</span>
+      <span>- ₹${discountFlat.toFixed(2)}</span>
+    </div>` : ""}
+
+     <div style="font-size:18px; font-weight:bold;">
+    Grand Total: ₹${grandTotal.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}
+  </div>
+
+    <!-- Amount in Words -->
+    <div style="margin-top:6px; font-size:13px; font-style:italic; color:#374151;">
+      Amount in Words: <b>${amountInWords(grandTotal)}</b>
+    </div>
+
   </div>
 </div>
+
+
 
 <div class="signature">
   For ${data.company}
