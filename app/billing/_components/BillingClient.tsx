@@ -13,6 +13,7 @@ import CustomerBlock from "./CustomerBlock";
 import ProductBlock from "./ProductBlock";
 import InvoiceTable from "./InvoiceTable";
 import SummaryBlock from "./SummaryBlock";
+import DiscriptionBlock from "./discriptionBlock";
 
 export default function BillingPage() {
   const router = useRouter();
@@ -23,6 +24,9 @@ export default function BillingPage() {
   const items = useBillingStore((s: any) => s.items);
   const discountPercent = useBillingStore((s: any) => s.discountPercent);
   const discountFlat = useBillingStore((s: any) => s.discountFlat);
+  const projectDescriptionenabled = useBillingStore((s) => s.projectDescriptionEnabled);
+  const projectDescription = useBillingStore((s) => s.projectDescription);
+  const discountEnabled = useBillingStore((s: any) => s.discountEnabled);
 
   const loadDraftInvoice = useBillingStore((s: any) => s.loadDraftInvoice);
   const clearDraftInvoice = useBillingStore((s: any) => s.clearDraftInvoice);
@@ -57,6 +61,9 @@ export default function BillingPage() {
     items,
     discountPercent,
     discountFlat,
+    projectDescriptionEnabled: projectDescriptionenabled,
+    discountEnabled: discountEnabled,
+    projectDescription
   };
 
   const handleGenerateInvoice = () => {
@@ -90,9 +97,12 @@ export default function BillingPage() {
 
       <div className="grid md:grid-cols-2 gap-6">
         <SummaryBlock />
-        <Button variant="secondary" onClick={handleGenerateInvoice}>
-          Generate Invoice
-        </Button>
+        <div>
+          <DiscriptionBlock />
+          <Button className="w-full mt-2.5 " variant="secondary" onClick={handleGenerateInvoice}>
+            Generate Invoice
+          </Button>
+        </div>
       </div>
     </div>
   );

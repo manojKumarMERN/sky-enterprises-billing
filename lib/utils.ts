@@ -94,6 +94,11 @@ export const handleDownload = (data: any, saveInvoiceToLocal: (d: any) => void) 
 
   const discountPercent = data.discountPercent || 0;
   const discountFlat = data.discountFlat || 0;
+  const projectDescriptionEnabled = data.projectDescriptionEnabled || false;
+  const projectDescription = data.projectDescription || "";
+  const descriptionHTML = projectDescription
+    ? projectDescription.replace(/\n/g, "<br/>")
+    : "";
 
   const subTotal = data.items.reduce((sum: number, item: any) => {
     if (item.sqft && item.rate) return sum + item.qty * item.sqft * item.rate;
@@ -187,6 +192,33 @@ h1 {
   font-size: 13px;
   color: #e5e7eb;
 }
+
+/* PROJECT DESCRIPTION BOX */
+.project-desc-box {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: justify;
+}
+
+.desc-title {
+  font-weight: 700;
+  color: #ffb703;
+  margin-bottom: 6px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.desc-content {
+  color: #f9fafb;
+  white-space: normal;
+}
+
 
 /* BILL BOX */
 .bill-box {
@@ -445,34 +477,41 @@ ${data.items.map((item: any, i: number) => {
 </tbody>
 </table>
 
+
+
 <!-- FOOTER LAST PAGE -->
 <div class="footer">
-
+${projectDescriptionEnabled && projectDescription ? `
+<div class="project-desc-box">
+  <div class="desc-title">Project Description</div>
+  <div class="desc-content">${descriptionHTML}</div>
+</div>
+` : ""}
 <div style="display:flex; justify-content:flex-end; margin-top:18px;">
   <div class="total-summary-box">
 
     <div class="summary-row">
       <span>Sub Total</span>
-      <span>₹${subTotal.toLocaleString("en-IN",{minimumFractionDigits:2})}</span>
+      <span>₹${subTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
     </div>
 
     ${discountPercent > 0 ? `
     <div class="summary-row discount">
       <span>Discount (${discountPercent}%)</span>
-      <span>- ₹${percentDiscountAmount.toLocaleString("en-IN",{minimumFractionDigits:2})}</span>
+      <span>- ₹${percentDiscountAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
     </div>` : ""}
 
     ${discountFlat > 0 ? `
     <div class="summary-row discount">
       <span>Flat Discount</span>
-      <span>- ₹${discountFlat.toLocaleString("en-IN",{minimumFractionDigits:2})}</span>
+      <span>- ₹${discountFlat.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
     </div>` : ""}
 
     <div class="summary-divider"></div>
 
     <div class="grand-total-row">
       <span>Grand Total</span>
-      <span>₹${grandTotal.toLocaleString("en-IN",{minimumFractionDigits:2})}</span>
+      <span>₹${grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
     </div>
 
     <div class="amount-words">

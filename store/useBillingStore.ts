@@ -20,6 +20,8 @@ type BillingStore = {
   discountEnabled: boolean;
   discountPercent: number;
   discountFlat: number;
+  projectDescriptionEnabled: boolean;
+  projectDescription: string;
 
   editingInvoiceNo: string | null;
   setEditingInvoice: (no: string | null) => void;
@@ -43,6 +45,8 @@ type BillingStore = {
   loadDraftInvoice: (data: any) => void;
   clearDraftInvoice: () => void;
 
+  setProjectDescriptionEnabled: (v: boolean) => void;
+  setProjectDescription: (v: string) => void;
 
 };
 
@@ -72,6 +76,9 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
   discountEnabled: false,
   discountPercent: 0,
   discountFlat: 0,
+  projectDescriptionEnabled: false,
+  projectDescription: "",
+
 
   setDiscountEnabled: (v) => set({ discountEnabled: v }),
   setDiscountPercent: (v) => set({ discountPercent: v }),
@@ -223,6 +230,9 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       items: data.items,
       discountPercent: data.discountPercent || 0,
       discountFlat: data.discountFlat || 0,
+      projectDescription: data.projectDescription || "",
+      projectDescriptionEnabled: data.projectDescriptionEnabled || false,
+      discountEnabled: data.discountEnabled || false
     });
   },
 
@@ -234,5 +244,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
   setEditingInvoice: (no) => set({ editingInvoiceNo: no }),
 
 
+  setProjectDescriptionEnabled: (v) => set({ projectDescriptionEnabled: v }),
+  setProjectDescription: (v) => set({ projectDescription: v }),
 
 }));
