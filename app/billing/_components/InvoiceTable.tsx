@@ -70,7 +70,7 @@ export default function InvoiceTable() {
                 <TableCell>₹{unitPrice}</TableCell>
 
                 {/* Total */}
-                <TableCell className="font-semibold">₹{totalPrice}</TableCell>
+                <TableCell className="font-semibold">₹{totalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</TableCell>
 
                 {/* Actions */}
                 <TableCell className="text-right space-x-2">

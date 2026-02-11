@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit,PlusCircle } from "lucide-react";
+import { Trash2, Edit, PlusCircle, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StoredInvoice {
   invoiceNo: string;
@@ -43,6 +44,12 @@ export default function Home() {
   const [invoices, setInvoices] = useState<StoredInvoice[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔍 Filters
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState("");
+
+  // Load invoices
   useEffect(() => {
     setTimeout(() => {
       const list = Object.keys(localStorage)
@@ -51,8 +58,14 @@ export default function Home() {
 
       setInvoices(list);
       setLoading(false);
-    }, 800); // fake loading for UX
+    }, 500);
   }, []);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Calculate Grand Total
   const calculateGrandTotal = (inv: StoredInvoice) => {
@@ -65,9 +78,10 @@ export default function Home() {
       return sum + item.qty * item.price;
     }, 0);
 
-    const percentDiscountAmount = (subTotal * discountPercent) / 100;
-    return subTotal - percentDiscountAmount - discountFlat;
+    return subTotal - (subTotal * discountPercent) / 100 - discountFlat;
   };
+
+
 
   const deleteInvoice = (invoiceNo: string) => {
     localStorage.removeItem(`invoice_${invoiceNo}`);
@@ -78,8 +92,44 @@ export default function Home() {
     router.push(`/billing?edit=${inv.invoiceNo}`);
   };
 
-
+  // Sort
   const sortedInvoices = [...invoices].sort((a, b) => b.createdAt - a.createdAt);
+
+  // Customers list
+  const customers = [...new Set(invoices.map((i) => i.data?.client?.name).filter(Boolean))];
+
+  // Filter invoices
+  const filteredInvoices = useMemo(() => {
+    return sortedInvoices.filter((inv) => {
+      const name = inv.data?.client?.name?.toLowerCase() || "";
+      const invoiceNo = inv.invoiceNo.toLowerCase();
+
+      const matchesSearch =
+        invoiceNo.includes(debouncedSearch.toLowerCase()) ||
+        name.includes(debouncedSearch.toLowerCase());
+
+      const matchesCustomer =
+        selectedCustomer === "" ||
+        selectedCustomer === "all" ||
+        inv.data?.client?.name === selectedCustomer;
+
+      return matchesSearch && matchesCustomer;
+    });
+  }, [sortedInvoices, debouncedSearch, selectedCustomer]);
+
+
+  // Highlight search text
+  const highlight = (text: string) => {
+    if (!debouncedSearch) return text;
+    const parts = text.split(new RegExp(`(${debouncedSearch})`, "gi"));
+    return parts.map((part, i) =>
+      part.toLowerCase() === debouncedSearch.toLowerCase() ? (
+        <mark key={i} className="bg-yellow-200 px-1" > {part} </mark>
+      ) : (
+        part
+      )
+    );
+  };
 
   const totalRevenue = invoices.reduce(
     (sum, inv) => sum + calculateGrandTotal(inv),
@@ -94,9 +144,7 @@ export default function Home() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">SKY Enterprises - Invoice Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage drafts, customers, and billing history
-            </p>
+            <p className="text-sm text-muted-foreground">Manage drafts and billing</p>
           </div>
 
           <Button onClick={() => router.push("/billing")}>
@@ -105,37 +153,71 @@ export default function Home() {
           </Button>
         </div>
 
-        {/* STATS CARDS */}
+        {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {loading ? (
-            <>
-              <Skeleton className="h-24 w-full rounded-xl" />
-              <Skeleton className="h-24 w-full rounded-xl" />
-              <Skeleton className="h-24 w-full rounded-xl" />
-            </>
-          ) : (
-            <>
-              <Card>
-                <CardHeader><CardTitle>Total Invoices</CardTitle></CardHeader>
-                <CardContent className="text-2xl font-bold">
-                  {invoices.length}
-                </CardContent>
-              </Card>
+          <Card>
+            <CardHeader><CardTitle>Total Invoices</CardTitle></CardHeader>
+            <CardContent className="text-2xl font-bold">{invoices.length}</CardContent>
+          </Card>
 
-              <Card>
-                <CardHeader><CardTitle>Total Revenue</CardTitle></CardHeader>
-                <CardContent className="text-2xl font-bold">
-                  ₹{totalRevenue.toFixed(2)}
-                </CardContent>
-              </Card>
+          <Card>
+            <CardHeader><CardTitle>Total Revenue</CardTitle></CardHeader>
+            <CardContent className="text-2xl font-bold">
+              ₹{totalRevenue.toLocaleString("en-IN")}
+            </CardContent>
+          </Card>
 
-              <Card>
-                <CardHeader><CardTitle>Active Drafts</CardTitle></CardHeader>
-                <CardContent className="text-2xl font-bold">
-                  {sortedInvoices.length}
-                </CardContent>
-              </Card>
-            </>
+          <Card>
+            <CardHeader><CardTitle>Active Drafts</CardTitle></CardHeader>
+            <CardContent className="text-2xl font-bold">{sortedInvoices.length}</CardContent>
+          </Card>
+        </div>
+
+        {/* FILTER BAR */}
+        <div className="flex gap-3 flex-wrap bg-card p-4 border rounded-xl">
+
+          <input
+            className="border px-3 py-2 rounded-md text-sm w-64"
+            placeholder="Search invoice or customer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <Select
+            value={selectedCustomer}
+            onValueChange={(v) => setSelectedCustomer(v)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select Customer" />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="all">All Customers</SelectItem>
+
+              {customers.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+        </div>
+
+        {/* FILTER CHIPS */}
+        <div className="flex gap-2 flex-wrap">
+          {debouncedSearch && (
+            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+              Search: {debouncedSearch}
+              <X className="w-3 h-3 cursor-pointer" onClick={() => setSearch("")} />
+            </span>
+          )}
+
+          {selectedCustomer && selectedCustomer !== "all" && (
+            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+              Customer: {selectedCustomer}
+              <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedCustomer("all")} />
+            </span>
           )}
         </div>
 
@@ -147,71 +229,63 @@ export default function Home() {
                 <TableHead>Invoice No</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Items</TableHead>
-                <TableHead>Discount</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Created Date</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {/* LOADING SKELETON */}
               {loading &&
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={6}>
                       <Skeleton className="h-6 w-full" />
                     </TableCell>
                   </TableRow>
                 ))}
 
-              {!loading && sortedInvoices.length === 0 && (
+              {!loading && filteredInvoices.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                     No invoices found
                   </TableCell>
                 </TableRow>
               )}
 
               {!loading &&
-                sortedInvoices.map((inv) => (
+                filteredInvoices.map((inv) => (
                   <TableRow key={inv.invoiceNo}>
-                    <TableCell className="font-medium">{inv.invoiceNo}</TableCell>
-                    <TableCell>{inv.data?.client?.name || "N/A"}</TableCell>
+                    <TableCell>{highlight(inv.invoiceNo)}</TableCell>
+
+                    <TableCell>{highlight(inv.data?.client?.name || "N/A")}</TableCell>
+
                     <TableCell>{inv.data?.items?.length || 0}</TableCell>
 
-                    <TableCell>
-                      {inv.data.discountPercent || 0}% + ₹{inv.data.discountFlat || 0}
-                    </TableCell>
-
                     <TableCell className="font-semibold">
-                      ₹{calculateGrandTotal(inv).toFixed(2)}
+                      ₹{calculateGrandTotal(inv).toLocaleString("en-IN")}
                     </TableCell>
 
                     <TableCell>
                       {new Date(inv.createdAt).toLocaleDateString()}
                     </TableCell>
 
-                    {/* ACTIONS */}
                     <TableCell className="text-right flex gap-2 justify-end">
-
                       <Button size="sm" onClick={() => editInvoice(inv)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                        <Edit className="mr-1 h-4 w-4" /> Edit
                       </Button>
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button size="sm" variant="destructive">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            <Trash2 className="mr-1 h-4 w-4" /> Delete
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This action cannot be undone.
+                              This cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

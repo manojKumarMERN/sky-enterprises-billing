@@ -176,13 +176,13 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     }),
 
   generateInvoiceNumber: () =>
-    `SKY-INV-${Date.now()}`, // Better readable than uuid
+    `SKY-INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+
 
   saveInvoiceToLocal: (invoiceData) => {
     const { editingInvoiceNo } = get();
     let invoiceNo = editingInvoiceNo;
 
-    // If NOT editing → create new
     if (!invoiceNo) {
       invoiceNo = get().generateInvoiceNumber();
     }
@@ -200,8 +200,11 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
     localStorage.setItem(`invoice_${invoiceNo}`, JSON.stringify(dataToSave));
 
+    set({ editingInvoiceNo: null });
+
     return invoiceNo;
   },
+
 
 
   cleanOldInvoices: () => {
@@ -246,5 +249,20 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
 
   setProjectDescriptionEnabled: (v) => set({ projectDescriptionEnabled: v }),
   setProjectDescription: (v) => set({ projectDescription: v }),
+
+  resetInvoice: () => set({
+    clientDetail: {
+      name: "",
+      address: "",
+      phone: "",
+    },
+    items: [],
+    discountPercent: 0,
+    discountFlat: 0,
+    projectDescription: "",
+    projectDescriptionEnabled: false,
+    discountEnabled: false,
+  }),
+
 
 }));

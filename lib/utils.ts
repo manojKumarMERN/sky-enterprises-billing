@@ -85,7 +85,6 @@ function amountInWords(amount: number) {
 }
 
 
-
 export const handleDownload = (data: any, saveInvoiceToLocal: (d: any) => void) => {
   const today = new Date();
   const date = today.toLocaleDateString();

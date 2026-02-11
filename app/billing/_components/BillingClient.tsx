@@ -27,6 +27,7 @@ export default function BillingPage() {
   const projectDescriptionenabled = useBillingStore((s) => s.projectDescriptionEnabled);
   const projectDescription = useBillingStore((s) => s.projectDescription);
   const discountEnabled = useBillingStore((s: any) => s.discountEnabled);
+  const resetInvoice = useBillingStore((s: any) => s.resetInvoice);
 
   const loadDraftInvoice = useBillingStore((s: any) => s.loadDraftInvoice);
   const clearDraftInvoice = useBillingStore((s: any) => s.clearDraftInvoice);
@@ -36,16 +37,19 @@ export default function BillingPage() {
   const setEditingInvoice = useBillingStore(s => s.setEditingInvoice);
 
   useEffect(() => {
-    if (!editNo) return;
+    if (!editNo) {
+      resetInvoice();
+      return;
+    }
 
     const raw = localStorage.getItem(`invoice_${editNo}`);
     if (!raw) return;
 
     const inv = JSON.parse(raw);
-
     loadDraftInvoice(inv.data);
     setEditingInvoice(editNo);
   }, [editNo]);
+
 
 
   const invoiceData = {
