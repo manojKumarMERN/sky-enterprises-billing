@@ -1,5 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
+
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useBillingStore } from "@/store/useBillingStore";
@@ -7,85 +8,89 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { COMPANY_INFO } from "@/shared/constants/company";
-import { handleDownload } from "@/lib/utils";
 import CompanyBlock from "./CompanyBlock";
 import CustomerBlock from "./CustomerBlock";
 import ProductBlock from "./ProductBlock";
 import InvoiceTable from "./InvoiceTable";
 import SummaryBlock from "./SummaryBlock";
 import DiscriptionBlock from "./discriptionBlock";
+import { handleDownload } from "@/components/invoicePrintable";
 
 export default function BillingPage() {
-  const router = useRouter();
+  const router    = useRouter();
   const ourDetail = COMPANY_INFO;
 
-  const clientDetails = useBillingStore((s: any) => s.clientDetail);
-  const saveInvoiceToLocal = useBillingStore((s: any) => s.saveInvoiceToLocal);
-  const items = useBillingStore((s: any) => s.items);
-  const discountPercent = useBillingStore((s: any) => s.discountPercent);
-  const discountFlat = useBillingStore((s: any) => s.discountFlat);
+  const clientDetails             = useBillingStore((s: any) => s.clientDetail);
+  const saveInvoiceToLocal        = useBillingStore((s: any) => s.saveInvoiceToLocal);
+  const items                     = useBillingStore((s: any) => s.items);
+  const discountPercent           = useBillingStore((s: any) => s.discountPercent);
+  const discountFlat              = useBillingStore((s: any) => s.discountFlat);
   const projectDescriptionenabled = useBillingStore((s) => s.projectDescriptionEnabled);
-  const projectDescription = useBillingStore((s) => s.projectDescription);
-  const discountEnabled = useBillingStore((s: any) => s.discountEnabled);
-  const resetInvoice = useBillingStore((s: any) => s.resetInvoice);
-
-  const loadDraftInvoice = useBillingStore((s: any) => s.loadDraftInvoice);
-  const clearDraftInvoice = useBillingStore((s: any) => s.clearDraftInvoice);
+  const projectDescription        = useBillingStore((s) => s.projectDescription);
+  const discountEnabled           = useBillingStore((s: any) => s.discountEnabled);
+  const resetInvoice              = useBillingStore((s: any) => s.resetInvoice);
+  const loadDraftInvoice          = useBillingStore((s: any) => s.loadDraftInvoice);
+  const setEditingInvoice         = useBillingStore((s) => s.setEditingInvoice);
 
   const searchParams = useSearchParams();
-  const editNo = searchParams.get("edit");
-  const setEditingInvoice = useBillingStore(s => s.setEditingInvoice);
+  const editNo       = searchParams.get("edit"); // e.g. "SKY-INV-1234567-890"
 
   useEffect(() => {
     if (!editNo) {
+      // New invoice — reset everything
       resetInvoice();
       return;
     }
 
+    // Editing — load the existing invoice into the store
     const raw = localStorage.getItem(`invoice_${editNo}`);
-    if (!raw) return;
+    if (!raw) {
+      toast.error("Invoice not found");
+      router.push("/invoices");
+      return;
+    }
 
     const inv = JSON.parse(raw);
     loadDraftInvoice(inv.data);
+
+    // ✅ Tell the store which invoice we are editing
+    // saveInvoiceToLocal will reuse this number instead of generating a new one
     setEditingInvoice(editNo);
+
   }, [editNo]);
 
-
-
   const invoiceData = {
-    company: ourDetail?.companyName,
+    company:  ourDetail?.companyName,
     location: ourDetail?.officeLocation,
-    tagLine: ourDetail?.tagLine,
-    phone: ourDetail?.officePhone,
+    tagLine:  ourDetail?.tagLine,
+    phone:    ourDetail?.officePhone,
     client: {
-      name: clientDetails?.name || "N/A",
+      name:    clientDetails?.name    || "N/A",
       address: clientDetails?.address || "N/A",
-      phone: clientDetails?.phone || "N/A",
+      phone:   clientDetails?.phone   || "N/A",
     },
     items,
     discountPercent,
     discountFlat,
     projectDescriptionEnabled: projectDescriptionenabled,
-    discountEnabled: discountEnabled,
-    projectDescription
+    discountEnabled,
+    projectDescription,
   };
 
-  const handleGenerateInvoice = () => {
-    const noClient =
-      !clientDetails?.name?.trim() || !clientDetails?.address?.trim();
-    const noItems = !items || items.length < 1;
+  const handleGenerateInvoice = async () => {
+    const noClient = !clientDetails?.name?.trim() || !clientDetails?.address?.trim();
+    const noItems  = !items || items.length < 1;
 
-    if (noClient) {
-      toast.error("Please enter customer details");
-      return;
-    }
+    if (noClient) { toast.error("Please enter customer details"); return; }
+    if (noItems)  { toast.error("Please add at least one product"); return; }
 
-    if (noItems) {
-      toast.error("Please add at least one product");
-      return;
-    }
+    // handleDownload calls saveInvoiceToLocal which:
+    //   - reuses editingInvoiceNo if editing  → updates existing record ✅
+    //   - generates a new number if new       → creates new record ✅
+    await handleDownload(invoiceData, saveInvoiceToLocal);
 
-    handleDownload(invoiceData, saveInvoiceToLocal);
+    // After preview opens, redirect back to invoices list
+    setTimeout(() => router.push("/"), 500);
   };
 
   return (
@@ -103,8 +108,13 @@ export default function BillingPage() {
         <SummaryBlock />
         <div>
           <DiscriptionBlock />
-          <Button className="w-full mt-2.5 " variant="secondary" onClick={handleGenerateInvoice}>
-            Generate Invoice
+          <Button
+            className="w-full mt-2.5"
+            variant="secondary"
+            onClick={handleGenerateInvoice}
+          >
+            {/* ✅ Button label changes based on mode */}
+            {editNo ? "Update Invoice" : "Generate Invoice"}
           </Button>
         </div>
       </div>

@@ -26,7 +26,6 @@ type BillingStore = {
   editingInvoiceNo: string | null;
   setEditingInvoice: (no: string | null) => void;
 
-
   setDiscountEnabled: (v: boolean) => void;
   setDiscountPercent: (v: number) => void;
   setDiscountFlat: (v: number) => void;
@@ -36,6 +35,7 @@ type BillingStore = {
   editItem: (item: Product) => void;
   deleteItem: (id: string) => void;
   resetTemp: () => void;
+  resetInvoice: () => void;
   generateInvoiceNumber: () => string;
 
   saveInvoiceToLocal: (invoiceData: any) => string;
@@ -47,10 +47,8 @@ type BillingStore = {
 
   setProjectDescriptionEnabled: (v: boolean) => void;
   setProjectDescription: (v: string) => void;
-
 };
 
-// Updated emptyItem to include sqft and rate
 const emptyItem = (): Product => ({
   id: uuidv4(),
   name: "",
@@ -58,39 +56,37 @@ const emptyItem = (): Product => ({
   category: "",
   qty: 1,
   price: 0,
-  sqft: undefined, // For Wooden Boards / Finishes
-  rate: undefined, // Rate per sqft
+  sqft: undefined,
+  rate: undefined,
 });
 
 export const useBillingStore = create<BillingStore>((set, get) => ({
-  // ===== CLIENT =====
-  clientDetail: {
-    name: "",
-    address: "",
-    phone: "",
-  },
-
-  editingInvoiceNo: null,
-
-
-  discountEnabled: false,
-  discountPercent: 0,
-  discountFlat: 0,
-  projectDescriptionEnabled: false,
-  projectDescription: "",
-
-
-  setDiscountEnabled: (v) => set({ discountEnabled: v }),
-  setDiscountPercent: (v) => set({ discountPercent: v }),
-  setDiscountFlat: (v) => set({ discountFlat: v }),
-
+  // ── CLIENT ────────────────────────────────────────────────────────────────
+  clientDetail: { name: "", address: "", phone: "" },
 
   setClient: (data) =>
     set((state) => ({
       clientDetail: { ...state.clientDetail, ...data },
     })),
 
-  // ===== PRODUCTS =====
+  // ── DISCOUNT & DESCRIPTION ────────────────────────────────────────────────
+  discountEnabled: false,
+  discountPercent: 0,
+  discountFlat: 0,
+  projectDescriptionEnabled: false,
+  projectDescription: "",
+
+  setDiscountEnabled:  (v) => set({ discountEnabled: v }),
+  setDiscountPercent:  (v) => set({ discountPercent: v }),
+  setDiscountFlat:     (v) => set({ discountFlat: v }),
+  setProjectDescriptionEnabled: (v) => set({ projectDescriptionEnabled: v }),
+  setProjectDescription:        (v) => set({ projectDescription: v }),
+
+  // ── INVOICE EDITING ───────────────────────────────────────────────────────
+  editingInvoiceNo: null,
+  setEditingInvoice: (no) => set({ editingInvoiceNo: no }),
+
+  // ── PRODUCTS ──────────────────────────────────────────────────────────────
   tempItem: emptyItem(),
   items: [],
   isEditing: false,
@@ -100,27 +96,30 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       tempItem: { ...state.tempItem, ...data },
     })),
 
-  // ADD OR UPDATE
   addOrUpdateItem: () =>
     set((state) => {
       const newItem = state.tempItem;
 
-      // Check for duplicates by name + price (or rate for sqft items)
+      // ✅ Validate: don't allow empty name
+      if (!newItem.name.trim()) {
+        alert("⚠️ Product name is required!");
+        return state;
+      }
+
+      // ✅ Duplicate check
       const exists = state.items.some((item) => {
         if (newItem.sqft && newItem.rate) {
-          // Wooden Boards / Finishes comparison by name + rate
           return (
             item.name.trim().toLowerCase() === newItem.name.trim().toLowerCase() &&
             item.rate === newItem.rate &&
             item.id !== newItem.id
           );
-        } else {
-          return (
-            item.name.trim().toLowerCase() === newItem.name.trim().toLowerCase() &&
-            item.price === newItem.price &&
-            item.id !== newItem.id
-          );
         }
+        return (
+          item.name.trim().toLowerCase() === newItem.name.trim().toLowerCase() &&
+          item.price === newItem.price &&
+          item.id !== newItem.id
+        );
       });
 
       if (exists) {
@@ -128,7 +127,7 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
         return state;
       }
 
-      // UPDATE
+      // UPDATE existing item
       if (state.isEditing) {
         return {
           items: state.items.map((item) =>
@@ -139,28 +138,23 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
         };
       }
 
-      // ADD
+      // ADD new item
       return {
         items: [...state.items, newItem],
         tempItem: emptyItem(),
       };
     }),
 
-  // EDIT
-  editItem: (item) => {
-    console.log(item, "SINGLE_ITEM"),
-      set(() => ({
-        tempItem: item,
-        isEditing: true,
+  editItem: (item) =>
+    // ✅ Removed accidental console.log with comma operator
+    set(() => ({
+      tempItem: item,
+      isEditing: true,
+    })),
 
-      }))
-  },
-
-  // DELETE
   deleteItem: (id) =>
     set((state) => {
       const isEditingDeleted = state.tempItem.id === id;
-
       return {
         items: state.items.filter((i) => i.id !== id),
         tempItem: isEditingDeleted ? emptyItem() : state.tempItem,
@@ -168,74 +162,77 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
       };
     }),
 
-  // RESET FORM
-  resetTemp: () =>
-    set({
-      tempItem: emptyItem(),
-      isEditing: false,
-    }),
+  resetTemp: () => set({ tempItem: emptyItem(), isEditing: false }),
 
+  // ── INVOICE STORAGE ───────────────────────────────────────────────────────
   generateInvoiceNumber: () =>
     `SKY-INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
 
-
   saveInvoiceToLocal: (invoiceData) => {
-    const { editingInvoiceNo } = get();
-    let invoiceNo = editingInvoiceNo;
+    const { editingInvoiceNo, generateInvoiceNumber } = get();
 
-    if (!invoiceNo) {
-      invoiceNo = get().generateInvoiceNumber();
-    }
-
-    const expiryDays = 30;
-    const expiryTime = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
+    // ✅ Reuse existing number if editing, otherwise generate new
+    const invoiceNo = editingInvoiceNo ?? generateInvoiceNumber();
 
     const dataToSave = {
       invoiceNo,
       data: invoiceData,
       createdAt: Date.now(),
-      expiryTime,
+      expiryTime: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
       updatedAt: Date.now(),
     };
 
     localStorage.setItem(`invoice_${invoiceNo}`, JSON.stringify(dataToSave));
 
+    // ✅ Clear editing state after save
     set({ editingInvoiceNo: null });
 
     return invoiceNo;
   },
 
-
-
   cleanOldInvoices: () => {
+    // ✅ Guard: only run in browser
+    if (typeof window === "undefined") return;
     Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith("invoice_")) {
-        const raw = localStorage.getItem(key);
-        if (!raw) return;
-
+      if (!key.startsWith("invoice_")) return;
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      try {
         const inv = JSON.parse(raw);
         if (Date.now() > inv.expiryTime) {
           localStorage.removeItem(key);
         }
+      } catch {
+        // Remove corrupted entries
+        localStorage.removeItem(key);
       }
     });
   },
 
   getSavedInvoices: () => {
+    if (typeof window === "undefined") return [];
     return Object.keys(localStorage)
       .filter((k) => k.startsWith("invoice_"))
-      .map((k) => JSON.parse(localStorage.getItem(k) || "{}"));
+      .map((k) => {
+        try {
+          return JSON.parse(localStorage.getItem(k) || "{}");
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean) // ✅ Remove null/corrupt entries
+      .sort((a, b) => b.createdAt - a.createdAt); // ✅ Newest first
   },
 
   loadDraftInvoice: (data) => {
     set({
-      clientDetail: data.client,
-      items: data.items,
-      discountPercent: data.discountPercent || 0,
-      discountFlat: data.discountFlat || 0,
-      projectDescription: data.projectDescription || "",
+      clientDetail:              data.client               || { name: "", address: "", phone: "" },
+      items:                     data.items                || [],
+      discountPercent:           data.discountPercent      || 0,
+      discountFlat:              data.discountFlat         || 0,
+      projectDescription:        data.projectDescription   || "",
       projectDescriptionEnabled: data.projectDescriptionEnabled || false,
-      discountEnabled: data.discountEnabled || false
+      discountEnabled:           data.discountEnabled      || false,
     });
   },
 
@@ -243,26 +240,17 @@ export const useBillingStore = create<BillingStore>((set, get) => ({
     localStorage.removeItem("draft_invoice");
   },
 
-
-  setEditingInvoice: (no) => set({ editingInvoiceNo: no }),
-
-
-  setProjectDescriptionEnabled: (v) => set({ projectDescriptionEnabled: v }),
-  setProjectDescription: (v) => set({ projectDescription: v }),
-
-  resetInvoice: () => set({
-    clientDetail: {
-      name: "",
-      address: "",
-      phone: "",
-    },
-    items: [],
-    discountPercent: 0,
-    discountFlat: 0,
-    projectDescription: "",
-    projectDescriptionEnabled: false,
-    discountEnabled: false,
-  }),
-
-
+  // ── RESET ─────────────────────────────────────────────────────────────────
+  resetInvoice: () =>
+    set({
+      clientDetail:              { name: "", address: "", phone: "" },
+      items:                     [],
+      tempItem:                  emptyItem(), // ✅ Also reset tempItem
+      isEditing:                 false,       // ✅ Also reset isEditing
+      discountPercent:           0,
+      discountFlat:              0,
+      discountEnabled:           false,
+      projectDescription:        "",
+      projectDescriptionEnabled: false,
+    }),
 }));

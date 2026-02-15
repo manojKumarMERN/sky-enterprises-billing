@@ -74,7 +74,7 @@ function numberToWords(num: number) {
   return convertIndian(num);
 }
 
-function amountInWords(amount: number) {
+export function amountInWords(amount: number) {
   const rupees = Math.floor(amount);
   const paise = Math.round((amount - rupees) * 100);
 
@@ -122,6 +122,7 @@ export const handleDownload = (data: any, saveInvoiceToLocal: (d: any) => void) 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.3/html2pdf.bundle.min.js" integrity="sha512-yu5WG6ewBNKx8svICzUA01vozhmiQCVfzjzW40eCHJdsDRaOifh9hPlWBDex5b32gWCzawTp1F3FJz60ps6TnQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <title>Invoice</title>
 <style>
 
@@ -364,10 +365,14 @@ width: 100%;
 }
 
 /* MENU */
-.menu-btn {
+.menu-wrapper {
   position: fixed;
   top: 15px;
   right: 15px;
+  z-index: 9999;
+}
+
+.menu-btn {
   background: white;
   border-radius: 50%;
   width: 48px;
@@ -378,6 +383,33 @@ width: 100%;
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 60px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  overflow: hidden;
+  display: none;
+  min-width: 160px;
+}
+
+.menu-dropdown button {
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: white;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.menu-dropdown button:hover {
+  background: #f3f4f6;
+}
+
+
 /* PRINT FIX */
 @page {
   size: A4;
@@ -387,6 +419,10 @@ width: 100%;
 @media print {
   .page { box-shadow: none; }
   .menu-btn { display: none; }
+    .menu-wrapper { display: none; }
+  .menu-dropdown { display: none; }
+
+  #invoiceMenu { display: none; }
 
   table, tr, td, th { page-break-inside: avoid; }
 
@@ -417,7 +453,7 @@ width: 100%;
 
 <div class="header">
   <div style="display:flex;gap:10px ; align-items:center" >
-    <img src="/logo.png" class="logo" />
+   <img src="${baseUrl}/logo.png" class="logo" />
     <div>
     <div>
     <h1 >${data.company}</h1>
@@ -533,9 +569,61 @@ ${projectDescriptionEnabled && projectDescription ? `
 
 </div>
 
-<button class="menu-btn" onclick="window.print()">⋮</button>
+<div class="menu-wrapper">
+  <button class="menu-btn" onclick="toggleMenu()">⋮</button>
+
+  <div class="menu-dropdown" id="invoiceMenu">
+    <button onclick="handleDownload()"> Download PDF</button>
+    <button onclick="window.print()">Print</button>
+  </div>
+</div>
+
 
 </body>
+<script>
+function loadHtml2Pdf(callback) {
+  const script = document.createElement("script");
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.3/html2pdf.bundle.min.js";
+  script.onload = callback;
+  document.head.appendChild(script);
+}
+
+function toggleMenu() {
+  const menu = document.getElementById("invoiceMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+document.addEventListener("click", function(e){
+  if (!e.target.closest(".menu-wrapper")) {
+    document.getElementById("invoiceMenu").style.display = "none";
+  }
+});
+
+function handleDownload() {
+  const element = document.querySelector(".page");
+
+  if (!window.html2pdf) {
+    loadHtml2Pdf(() => generatePdf(element));
+  } else {
+    generatePdf(element);
+  }
+}
+
+function generatePdf(element) {
+console.log(element,html2pdf);
+  const opt = {
+    margin: 10,
+    filename: "invoice.pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+  };
+
+  html2pdf().set(opt).from(element).save();
+}
+</script>
+
+
 </html>
 `);
 
